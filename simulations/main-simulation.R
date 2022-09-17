@@ -18,11 +18,11 @@ r = 5
 
 
 
-############## balance design #################
-sim.type = "balance"
-K.true = 4 # 2, 3, 4
-rsn = 0.4  # 0.0, 0.2, 0.4
-source("sim_func_para.R")
+# ############## balance design #################
+# sim.type = "balance"
+# K.true = 4 # 2, 3, 4
+# rsn = 0.4  # 0.0, 0.2, 0.4
+# source("sim_func_para.R")
 
 
 ############## unbalance design #################
