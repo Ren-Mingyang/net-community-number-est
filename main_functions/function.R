@@ -9,7 +9,7 @@
 fusion.network = function(A, Omega.A, sample.index.A, gamma.index, lambda1, 
                           lambda2, lambda3, Z.int, B.int, a=3, kappa=1, alpha=1,
                           eps = 5e-2, niter = 20, niter.Z=5, update.B="ADMM", 
-                          local.oppro=F, ad.BIC=F, merge.all=T){
+                          local.oppro=F, ad.BIC=F, merge.all=T, ad.BIC.B=F){
   n = as.integer(dim(A)[1])
   p = dim(Z.int)[2]
   nc = n*(n-1)
@@ -104,7 +104,7 @@ fusion.network = function(A, Omega.A, sample.index.A, gamma.index, lambda1,
     diff.Bij[sample.index.A[3,V.norm == 0]] = 0
     cluster.results = get.cluster(diff.Bij, n, sample.index.n, merge.all=merge.all)
     K.hat = cluster.results$K.hat
-    BIC.vec = BIC.value(A, Z.hat, K.hat, adjust=ad.BIC, B.hat)
+    BIC.vec = BIC.value(A, Z.hat, K.hat, adjust=ad.BIC, B.hat, ad.B=ad.BIC.B)
   }
   
   Z.hat = Z.new
@@ -150,7 +150,8 @@ obj.value = function(A, ZZ, BB, lambda1, lambda2, lambda3, Omega.A){
 network.comm.num = function(A, sample.index.n, lambda, Z.int, B.int, 
                                  a=3, kappa=1, alpha=1, eps=5e-2, niter=20, 
                                  niter.Z=5, update.B="ADMM",local.oppro=F, merge.all=T,
-                                 ad.BIC=F, Fully.Connected=T, trace=F, line.search=T){
+                                 ad.BIC=F, Fully.Connected=T, trace=F, 
+                                 line.search=T, ad.BIC.B=F){
   n  = as.integer(dim(A)[1])
   p  = dim(Z.int)[2]
   
@@ -187,7 +188,7 @@ network.comm.num = function(A, sample.index.n, lambda, Z.int, B.int,
                                 a=a, kappa=kappa, alpha=alpha, eps = eps, 
                                 niter = niter, niter.Z=niter.Z, ad.BIC=ad.BIC,
                                 update.B=update.B, local.oppro=local.oppro, 
-                                merge.all=merge.all)
+                                merge.all=merge.all, ad.BIC.B=ad.BIC.B)
       Z.list[[l]]   = res.list$Z.hat
       B.list[[l]]   = res.list$B.hat
       V.list[[l]]   = res.list$V.hat
@@ -213,7 +214,7 @@ network.comm.num = function(A, sample.index.n, lambda, Z.int, B.int,
                                   a=a, kappa=kappa, alpha=alpha, eps = eps, 
                                   niter = niter, niter.Z=niter.Z, ad.BIC=ad.BIC,
                                   update.B=update.B, local.oppro=local.oppro, 
-                                  merge.all=merge.all)
+                                  merge.all=merge.all, ad.BIC.B=ad.BIC.B)
         Z.list[[l]]   = res.list$Z.hat
         B.list[[l]]   = res.list$B.hat
         V.list[[l]]   = res.list$V.hat
@@ -241,7 +242,7 @@ network.comm.num = function(A, sample.index.n, lambda, Z.int, B.int,
                                   a=a, kappa=kappa, alpha=alpha, eps = eps, 
                                   niter = niter, niter.Z=niter.Z, ad.BIC=ad.BIC,
                                   update.B=update.B, local.oppro=local.oppro, 
-                                  merge.all=merge.all)
+                                  merge.all=merge.all, ad.BIC.B=ad.BIC.B)
         Z.list[[l]]   = res.list$Z.hat
         B.list[[l]]   = res.list$B.hat
         V.list[[l]]   = res.list$V.hat
@@ -269,7 +270,7 @@ network.comm.num = function(A, sample.index.n, lambda, Z.int, B.int,
                                   a=a, kappa=kappa, alpha=alpha, eps = eps, 
                                   niter = niter, niter.Z=niter.Z, ad.BIC=ad.BIC,
                                   update.B=update.B, local.oppro=local.oppro, 
-                                  merge.all=merge.all)
+                                  merge.all=merge.all, ad.BIC.B=ad.BIC.B)
         Z.list[[l]]   = res.list$Z.hat
         B.list[[l]]   = res.list$B.hat
         V.list[[l]]   = res.list$V.hat
@@ -319,7 +320,7 @@ network.comm.num = function(A, sample.index.n, lambda, Z.int, B.int,
                                   a=a, kappa=kappa, alpha=alpha, eps = eps, 
                                   niter = niter, niter.Z=niter.Z, ad.BIC=ad.BIC,
                                   update.B=update.B, local.oppro=local.oppro, 
-                                  merge.all=merge.all)
+                                  merge.all=merge.all, ad.BIC.B=ad.BIC.B)
         Z.list[[l]]   = res.list$Z.hat
         B.list[[l]]   = res.list$B.hat
         V.list[[l]]   = res.list$V.hat
@@ -359,14 +360,19 @@ network.comm.num = function(A, sample.index.n, lambda, Z.int, B.int,
   
 }
 
-BIC.value = function(A, Z.hat, K.hat, adjust=F, B.hat){
+BIC.value = function(A, Z.hat, K.hat, adjust=F, B.hat, ad.B=F){
   n = dim(Z.hat)[1]
   p = dim(Z.hat)[2]
   r.hat = 1
   
   Theta.hat = Z.hat %*% t(Z.hat)
   likelihood.mat =  log(1 + exp(Theta.hat)) - Theta.hat * A
-  fitness = 2*sum(likelihood.mat[upper.tri(likelihood.mat)])/n/(n-1)
+  if(ad.B){
+    fitness = 2*sum(likelihood.mat[upper.tri(likelihood.mat)])/n/(n-1) + sum((Z.hat-B.hat)^2)/n
+  } else {
+    fitness = 2*sum(likelihood.mat[upper.tri(likelihood.mat)])/n/(n-1)
+  }
+  
   
   if(adjust){Cn = log(n*p)} else {Cn = 1}
   degree = Cn*r.hat*K.hat*log(n)  / n
