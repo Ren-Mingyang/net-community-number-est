@@ -36,7 +36,7 @@ The following .R files are submitted.
 # Real data analysis
 --0. Data preparation：
 
-(1) "Node_AAL116_info.csv" in working path "./case_study/"
+(1) "Node_AAL116_info.csv" in working path "./case_study/data"
 
 (2) AAL-NYU Time Courses data,  "NYU_phenotypic.csv", and "NYU-group.csv" files in subfolder "./case_study/data", which are downloaded from https://www.nitrc.org/plugins/mwiki/index.php/neurobureau:AthenaPipeline#Whole_Brain_Data
 
